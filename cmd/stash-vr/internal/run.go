@@ -3,17 +3,18 @@ package internal
 import (
 	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/application"
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
 
-const listenAddress = ":9666"
+const listenAddress = "0.0.0.0:9664"
 
 func Run() error {
 	ctx := application.InterruptableContext()

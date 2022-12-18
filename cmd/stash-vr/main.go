@@ -3,9 +3,10 @@
 package main
 
 import (
-	"github.com/rs/zerolog/log"
 	"stash-vr/cmd/stash-vr/internal"
 	_ "stash-vr/internal/logger"
+
+	"github.com/rs/zerolog/log"
 )
 
 func main() {

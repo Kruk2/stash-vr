@@ -3,12 +3,13 @@ package deovr
 import (
 	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"strings"
+
+	"github.com/Khan/genqlient/graphql"
 )
 
 type videoData struct {
@@ -120,7 +121,27 @@ func setMarkers(s gql.SceneFullParts, videoData *videoData) {
 	}
 }
 
+func ContainsI(a string, b string) bool {
+	return strings.Contains(
+		strings.ToLower(a),
+		strings.ToLower(b),
+	)
+}
+
 func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
+	// if ContainsI(s.StreamsParts.Files[0].Basename, "MKX200") {
+	// 	videoData.Is3d = true
+	// 	videoData.ScreenType = "mkx200"
+	// 	videoData.StereoMode = "sbs"
+	// 	return
+	// }
+	// if ContainsI(s.StreamsParts.Files[0].Basename, "MKX220") {
+	// 	videoData.Is3d = true
+	// 	videoData.ScreenType = "mkx220"
+	// 	videoData.StereoMode = "sbs"
+	// 	return
+	// }
+
 	for _, tag := range s.Tags {
 		switch tag.Name {
 		case "DOME":
@@ -156,6 +177,10 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 			videoData.Is3d = true
 			videoData.StereoMode = "tb"
 			continue
+			// default:
+			// 	videoData.Is3d = true
+			// 	videoData.StereoMode = "sbs"
+			// 	continue
 		}
 	}
 }

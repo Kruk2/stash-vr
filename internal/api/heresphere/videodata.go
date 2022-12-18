@@ -171,7 +171,7 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 		for _, s := range stream.Sources {
 			vs := source{
 				Resolution: s.Resolution,
-				Url:        s.Url,
+				Url:        "file://" + s.Url,
 			}
 			e.Sources = append(e.Sources, vs)
 		}

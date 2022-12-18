@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/rs/zerolog/log"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -44,10 +45,10 @@ func Get() Application {
 	once.Do(func() {
 		logDeprecatedKeysInUse()
 		cfg = Application{
-			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9997/graphql"),
 			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
-			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "FAVORITE"),
-			Filters:              getEnvOrDefaultStr(envKeyFilters, ""),
+			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "Favourite"),
+			Filters:              getEnvOrDefaultStr(envKeyFilters, "27,33,23,25,21,19,31,32"), //27,33,23,25,21,19,31,32
 			IsSyncMarkersAllowed: getEnvOrDefaultBool(envKeyAllowSyncMarkers, false),
 			LogLevel:             strings.ToLower(getEnvOrDefaultStr(envKeyLogLevel, "info")),
 			IsRedactDisabled:     getEnvOrDefaultBool(envKeyDisableRedact, false),

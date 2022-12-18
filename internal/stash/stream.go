@@ -3,14 +3,14 @@ package stash
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"path/filepath"
 	"regexp"
 	"sort"
-	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Stream struct {
@@ -26,46 +26,21 @@ type Source struct {
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
-	streams := make([]Stream, 2)
+	streams := make([]Stream, len(fsp.Files))
 
-	directStream := Stream{
-		Name: "direct",
-		Sources: []Source{{
-			Resolution: fsp.Files[0].Height,
-			Url:        fsp.Paths.Stream,
-		}},
-	}
-
-	switch fsp.Files[0].Video_codec {
-	case "h264", "hevc", "h265", "mpeg4":
-		streams[0] = Stream{
-			Name:    "transcoding",
-			Sources: getSources(ctx, fsp, "MP4", "Direct stream", sortResolutionAsc),
-		}
-		streams[1] = directStream
-	case "vp8", "vp9":
-		streams[0] = Stream{
-			Name:    "transcoding",
-			Sources: getSources(ctx, fsp, "WEBM", "Direct stream", sortResolutionAsc),
-		}
-		streams[1] = directStream
-	default:
-		log.Ctx(ctx).Warn().Str("codec", fsp.Files[0].Video_codec).Str("file ext", filepath.Ext(fsp.Files[0].Path)).Msg("Codec not supported? Selecting transcoding sources.")
-		streams[0] = Stream{
-			Name: "transcoding",
-			//transcode unsupported codecs to webm by default - or should we do mp4?
-			Sources: getSources(ctx, fsp, "WEBM", "webm", sortResolutionAsc),
+	for i, file := range fsp.Files {
+		streams[i] = Stream{
+			Name: strings.TrimSuffix(file.Basename, filepath.Ext(file.Basename)),
+			Sources: []Source{{
+				Resolution: file.Height,
+				Url:        strings.Replace(file.Path, "\\", "/", -1),
+			}},
 		}
 	}
 
-	// stash adds query parameter 'apikey' for direct stream but not for transcoding streams - add it
-	if config.Get().StashApiKey != "" {
-		for i, stream := range streams {
-			for j, source := range stream.Sources {
-				streams[i].Sources[j].Url = ApiKeyed(source.Url)
-			}
-		}
-	}
+	sort.Slice(streams, func(i, j int) bool {
+		return streams[i].Sources[0].Url < streams[j].Sources[0].Url
+	})
 
 	return streams
 }

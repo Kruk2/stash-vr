@@ -187,7 +187,7 @@ fragment TagParts on Tag{
 
 fragment StreamsParts on Scene{
     paths {stream}
-    files{path,video_codec,height}
+    files{path,video_codec,height,basename}
     sceneStreams{url, mime_type, label}
 }
 
