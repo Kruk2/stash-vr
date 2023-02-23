@@ -3,12 +3,13 @@ package heresphere
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"regexp"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
-
-	"path/filepath"
+	"strings"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
@@ -101,12 +102,14 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	setIsFavorite(s, &vd)
 
 	setStreamSources(ctx, s, &vd)
-	set3DFormat(s, &vd)
+
+	if !strings.Contains(vd.Media[0].Sources[0].Url, "/VR/") && !strings.Contains(vd.Media[0].Sources[0].Url, "\\VR\\") {
+		set3DFormat(s, &vd)
+	}
 
 	setTags(s, &vd)
 
 	setScripts(s, &vd)
-
 	return vd, nil
 }
 
@@ -124,44 +127,82 @@ func setScripts(s gql.SceneFullParts, videoData *videoData) {
 	}
 }
 
+func ContainsI(a string, b string) bool {
+	return strings.Contains(
+		strings.ToLower(a),
+		strings.ToLower(b),
+	)
+}
+
 func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	for _, t := range s.Tags {
-		switch t.Name {
-		case "DOME":
+	videoData.Projection = "equirectangular"
+	videoData.Stereo = "sbs"
+	videoData.Fov = 180.0
+	videoData.Lens = "Linear"
+
+	filenameSeparator := regexp.MustCompile("[ _.-]+")
+
+	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Media[0].Sources[0].Url)), -1)
+	for i, part := range nameparts {
+		videoProjection := ""
+
+		if part == "mkx200" || part == "mkx220" || part == "rf52" || part == "fisheye190" || part == "vrca220" || part == "flat" {
+			videoProjection = part
+		} else if part == "fisheye" || part == "f180" || part == "180f" {
+			videoProjection = "fisheye"
+		} else if i < len(nameparts)-1 && (part+"_"+nameparts[i+1] == "mono_360" || part+"_"+nameparts[i+1] == "mono_180") {
+			videoProjection = nameparts[i+1] + "_mono"
+		} else if i < len(nameparts)-1 && (part+"_"+nameparts[i+1] == "360_mono" || part+"_"+nameparts[i+1] == "180_mono") {
+			videoProjection = part + "_mono"
+		} else {
+			continue
+		}
+
+		switch videoProjection {
+		case "flat":
+			videoData.Projection = "perspective"
+			videoData.Stereo = "mono"
+
+		case "180_mono":
 			videoData.Projection = "equirectangular"
-			videoData.Stereo = "sbs"
-			continue
-		case "SPHERE":
+			videoData.Stereo = "mono"
+
+		case "360_mono":
 			videoData.Projection = "equirectangular360"
-			videoData.Stereo = "sbs"
-			continue
-		case "FISHEYE":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			continue
-		case "MKX200":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			videoData.Lens = "MKX200"
-			videoData.Fov = 200.0
-			continue
-		case "RF52":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			videoData.Fov = 190.0
-			continue
-		case "CUBEMAP":
-			videoData.Projection = "cubemap"
-			videoData.Stereo = "sbs"
-		case "EAC":
-			videoData.Projection = "equiangularCubemap"
-			videoData.Stereo = "sbs"
-		case "SBS":
-			videoData.Stereo = "sbs"
-			continue
-		case "TB":
+			videoData.Stereo = "mono"
+
+		case "180_sbs":
+			videoData.Projection = "equirectangular"
+
+		case "360_tb":
+			videoData.Projection = "equirectangular360"
 			videoData.Stereo = "tb"
-			continue
+
+		case "mkx200":
+			videoData.Projection = "fisheye"
+			videoData.Fov = 200.0
+			videoData.Lens = "MKX200"
+
+		case "mkx220":
+			videoData.Projection = "fisheye"
+			videoData.Fov = 220.0
+			videoData.Lens = "MKX220"
+
+		case "vrca220":
+			videoData.Projection = "fisheye"
+			videoData.Fov = 220.0
+			videoData.Lens = "VRCA220"
+
+		case "rf52":
+			videoData.Projection = "fisheye"
+			videoData.Fov = 190.0
+
+		case "fisheye190":
+			videoData.Projection = "fisheye"
+			videoData.Fov = 190.0
+
+		case "fisheye":
+			videoData.Projection = "fisheye"
 		}
 	}
 }
