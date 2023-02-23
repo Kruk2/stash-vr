@@ -8,7 +8,10 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 
+	"path/filepath"
+
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
 
 type videoData struct {
@@ -168,11 +171,15 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 		e := media{
 			Name: stream.Name,
 		}
+		if len(stream.Sources) != 1 {
+			log.Ctx(ctx).Error().Msg("Wrong number of sources for scene " + s.Id)
+		}
 		for _, s := range stream.Sources {
 			vs := source{
 				Resolution: s.Resolution,
 				Url:        "file://" + s.Url,
 			}
+			e.Name = filepath.Base(s.Url)
 			e.Sources = append(e.Sources, vs)
 		}
 		videoData.Media = append(videoData.Media, e)
