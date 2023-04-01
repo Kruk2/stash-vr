@@ -127,7 +127,11 @@ func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilt
 		if err != nil {
 			return fmt.Errorf("AsStringCriterionInput: %w", err)
 		}
-
+	case "director":
+		sceneFilter.Director, err = criterion.asStringCriterionInput()
+		if err != nil {
+			return fmt.Errorf("AsStringCriterionInput: %w", err)
+		}
 	//IntCriterionInput
 	case "rating", "rating100":
 		sceneFilter.Rating, err = criterion.asIntCriterionInput()
@@ -223,6 +227,9 @@ func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilt
 		if err != nil {
 			return fmt.Errorf("AsMultiCriterionInput: %w", err)
 		}
+	default:
+		return fmt.Errorf("Unable to parse: %s", criterion.Type)
 	}
+
 	return nil
 }
