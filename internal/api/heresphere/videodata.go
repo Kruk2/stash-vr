@@ -100,13 +100,8 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 
 	setIsFavorite(s, &vd)
-
 	setStreamSources(ctx, s, &vd)
-
-	if !strings.Contains(vd.Media[0].Sources[0].Url, "/VR/") || !strings.Contains(vd.Media[0].Sources[0].Url, "\\VR\\") {
-		set3DFormat(s, &vd)
-	}
-
+	set3DFormat(s, &vd)
 	setTags(s, &vd)
 
 	setScripts(s, &vd)
@@ -140,13 +135,16 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 	videoData.Fov = 180.0
 	videoData.Lens = "Linear"
 
+	isVr := !strings.Contains(videoData.Media[0].Sources[0].Url, "/VR/") || !strings.Contains(videoData.Media[0].Sources[0].Url, "\\VR\\")
 	filenameSeparator := regexp.MustCompile("[ _.-]+")
 
 	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Media[0].Sources[0].Url)), -1)
 	for i, part := range nameparts {
 		videoProjection := ""
 
-		if part == "mkx200" || part == "mkx220" || part == "rf52" || part == "fisheye190" || part == "vrca220" || part == "flat" {
+		if !isVr {
+			videoProjection = "flat"
+		} else if part == "mkx200" || part == "mkx220" || part == "rf52" || part == "fisheye190" || part == "vrca220" || part == "flat" {
 			videoProjection = part
 		} else if part == "fisheye" || part == "f180" || part == "180f" {
 			videoProjection = "fisheye"

@@ -3,6 +3,8 @@ package deovr
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"regexp"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -13,19 +15,19 @@ import (
 )
 
 type videoData struct {
-	Authorized     string             `json:"authorized"`
-	FullAccess     bool               `json:"fullAccess"`
-	Title          string             `json:"title"`
-	Id             string             `json:"id"`
-	VideoLength    int                `json:"videoLength"`
-	Is3d           bool               `json:"is3d"`
-	ScreenType     string             `json:"screenType"`
-	StereoMode     string             `json:"stereoMode"`
-	SkipIntro      int                `json:"skipIntro"`
-	VideoThumbnail string             `json:"videoThumbnail,omitempty"`
-	VideoPreview   string             `json:"videoPreview,omitempty"`
-	ThumbnailUrl   string             `json:"thumbnailUrl"`
-	ChromaKey      videoDataChromaKey `json:"chromaKey"`
+	Authorized     string              `json:"authorized"`
+	FullAccess     bool                `json:"fullAccess"`
+	Title          string              `json:"title"`
+	Id             string              `json:"id"`
+	VideoLength    int                 `json:"videoLength"`
+	Is3d           bool                `json:"is3d"`
+	ScreenType     string              `json:"screenType"`
+	StereoMode     string              `json:"stereoMode"`
+	SkipIntro      int                 `json:"skipIntro"`
+	VideoThumbnail string              `json:"videoThumbnail,omitempty"`
+	VideoPreview   string              `json:"videoPreview,omitempty"`
+	ThumbnailUrl   string              `json:"thumbnailUrl"`
+	ChromaKey      *videoDataChromaKey `json:"chromaKey"`
 
 	TimeStamps []timeStamp `json:"timeStamps,omitempty"`
 
@@ -98,7 +100,9 @@ func setChromaKey(findSceneResponse *gql.FindSceneFullResponse, videoData *video
 	tagName := config.Get().PassThroughTag
 
 	if ContainsTag(findSceneResponse.FindScene.TagPartsArray, tagName) {
-		videoData.ChromaKey = videoDataChromaKey{HasAlpha: true}
+		videoData.ChromaKey = &videoDataChromaKey{HasAlpha: true}
+	} else {
+		videoData.ChromaKey = nil
 	}
 }
 
@@ -143,60 +147,73 @@ func ContainsI(a string, b string) bool {
 }
 
 func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	// if ContainsI(s.StreamsParts.Files[0].Basename, "MKX200") {
-	// 	videoData.Is3d = true
-	// 	videoData.ScreenType = "mkx200"
-	// 	videoData.StereoMode = "sbs"
-	// 	return
-	// }
-	// if ContainsI(s.StreamsParts.Files[0].Basename, "MKX220") {
-	// 	videoData.Is3d = true
-	// 	videoData.ScreenType = "mkx220"
-	// 	videoData.StereoMode = "sbs"
-	// 	return
-	// }
+	isVr := !strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "/VR/") || !strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "\\VR\\")
+	if !isVr {
+		return
+	}
 
-	for _, tag := range s.Tags {
-		switch tag.Name {
-		case "DOME":
-			videoData.Is3d = true
+	videoData.ScreenType = "dome"
+	videoData.Is3d = true
+	videoData.StereoMode = "sbs"
+
+	filenameSeparator := regexp.MustCompile("[ _.-]+")
+
+	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Encodings[0].VideoSources[0].Url)), -1)
+	for i, part := range nameparts {
+		videoProjection := ""
+
+		if part == "mkx200" || part == "mkx220" || part == "rf52" || part == "fisheye190" || part == "vrca220" || part == "flat" {
+			videoProjection = part
+		} else if part == "fisheye" || part == "f180" || part == "180f" {
+			videoProjection = "fisheye"
+		} else if i < len(nameparts)-1 && (part+"_"+nameparts[i+1] == "mono_360" || part+"_"+nameparts[i+1] == "mono_180") {
+			videoProjection = nameparts[i+1] + "_mono"
+		} else if i < len(nameparts)-1 && (part+"_"+nameparts[i+1] == "360_mono" || part+"_"+nameparts[i+1] == "180_mono") {
+			videoProjection = part + "_mono"
+		} else {
+			continue
+		}
+
+		switch videoProjection {
+		case "flat":
+			videoData.ScreenType = "flat"
+
+		case "180_mono":
 			videoData.ScreenType = "dome"
-			videoData.StereoMode = "sbs"
-			continue
-		case "SPHERE":
-			videoData.Is3d = true
+			videoData.StereoMode = "mono"
+
+		case "360_mono":
 			videoData.ScreenType = "sphere"
-			videoData.StereoMode = "sbs"
-			continue
-		case "FISHEYE":
-			videoData.Is3d = true
-			videoData.ScreenType = "fisheye"
-			videoData.StereoMode = "sbs"
-			continue
-		case "MKX200":
-			videoData.Is3d = true
-			videoData.ScreenType = "mkx200"
-			videoData.StereoMode = "sbs"
-			continue
-		case "RF52":
-			videoData.Is3d = true
-			videoData.ScreenType = "rf52"
-			videoData.StereoMode = "sbs"
-			continue
-		case "SBS":
-			videoData.Is3d = true
-			videoData.StereoMode = "sbs"
-			continue
-		case "TB":
-			videoData.Is3d = true
+		case "180_sbs":
+			videoData.ScreenType = "dome"
+		case "360_tb":
+			videoData.ScreenType = "sphere"
 			videoData.StereoMode = "tb"
-			continue
-			// default:
-			// 	videoData.Is3d = true
-			// 	videoData.StereoMode = "sbs"
-			// 	continue
+
+		case "mkx200":
+			videoData.ScreenType = "mkx200"
+
+		case "mkx220":
+			videoData.ScreenType = "mkx220"
+
+		case "vrca220":
+			videoData.ScreenType = "vrca220"
+
+		case "rf52":
+			videoData.ScreenType = "rf52"
+
+		case "fisheye190":
+			videoData.ScreenType = "fisheye190"
+
+		case "fisheye":
+			videoData.ScreenType = "fisheye"
 		}
 	}
+
+	videoData.Title = videoData.ScreenType + " - " + videoData.Title
+	videoData.ScreenType = ""
+	videoData.StereoMode = ""
+	videoData.Is3d = false
 }
 
 func ContainsTag(tagPartsArray gql.TagPartsArray, s string) bool {
