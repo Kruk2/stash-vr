@@ -13,22 +13,27 @@ import (
 )
 
 type videoData struct {
-	Authorized     string `json:"authorized"`
-	FullAccess     bool   `json:"fullAccess"`
-	Title          string `json:"title"`
-	Id             string `json:"id"`
-	VideoLength    int    `json:"videoLength"`
-	Is3d           bool   `json:"is3d"`
-	ScreenType     string `json:"screenType"`
-	StereoMode     string `json:"stereoMode"`
-	SkipIntro      int    `json:"skipIntro"`
-	VideoThumbnail string `json:"videoThumbnail,omitempty"`
-	VideoPreview   string `json:"videoPreview,omitempty"`
-	ThumbnailUrl   string `json:"thumbnailUrl"`
+	Authorized     string             `json:"authorized"`
+	FullAccess     bool               `json:"fullAccess"`
+	Title          string             `json:"title"`
+	Id             string             `json:"id"`
+	VideoLength    int                `json:"videoLength"`
+	Is3d           bool               `json:"is3d"`
+	ScreenType     string             `json:"screenType"`
+	StereoMode     string             `json:"stereoMode"`
+	SkipIntro      int                `json:"skipIntro"`
+	VideoThumbnail string             `json:"videoThumbnail,omitempty"`
+	VideoPreview   string             `json:"videoPreview,omitempty"`
+	ThumbnailUrl   string             `json:"thumbnailUrl"`
+	ChromaKey      videoDataChromaKey `json:"chromaKey"`
 
 	TimeStamps []timeStamp `json:"timeStamps,omitempty"`
 
 	Encodings []encoding `json:"encodings"`
+}
+
+type videoDataChromaKey struct {
+	HasAlpha bool `json:"hasAlpha"`
 }
 
 type timeStamp struct {
@@ -81,11 +86,20 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		ThumbnailUrl: thumbnailUrl,
 	}
 
+	setChromaKey(findSceneResponse, &vd)
 	setStreamSources(ctx, s, &vd)
 	setMarkers(s, &vd)
 	set3DFormat(s, &vd)
 
 	return vd, nil
+}
+
+func setChromaKey(findSceneResponse *gql.FindSceneFullResponse, videoData *videoData) {
+	tagName := config.Get().PassThroughTag
+
+	if ContainsTag(findSceneResponse.FindScene.TagPartsArray, tagName) {
+		videoData.ChromaKey = videoDataChromaKey{HasAlpha: true}
+	}
 }
 
 func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
@@ -183,4 +197,13 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 			// 	continue
 		}
 	}
+}
+
+func ContainsTag(tagPartsArray gql.TagPartsArray, s string) bool {
+	for _, t := range tagPartsArray.Tags {
+		if t.Name == s {
+			return true
+		}
+	}
+	return false
 }
