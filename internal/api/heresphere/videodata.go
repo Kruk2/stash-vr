@@ -103,7 +103,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 
 	setStreamSources(ctx, s, &vd)
 
-	if !strings.Contains(vd.Media[0].Sources[0].Url, "/VR/") && !strings.Contains(vd.Media[0].Sources[0].Url, "\\VR\\") {
+	if !strings.Contains(vd.Media[0].Sources[0].Url, "/VR/") || !strings.Contains(vd.Media[0].Sources[0].Url, "\\VR\\") {
 		set3DFormat(s, &vd)
 	}
 
