@@ -13,6 +13,7 @@ const (
 	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey      = "STASH_API_KEY"
 	envKeyFavoriteTag      = "FAVORITE_TAG"
+	envPassthroughTag      = "PASSTHROUGH"
 	envKeyFilters          = "FILTERS"
 	envKeyLogLevel         = "LOG_LEVEL"
 	envKeyDisableRedact    = "DISABLE_REDACT"
@@ -28,6 +29,7 @@ type Application struct {
 	StashGraphQLUrl      string
 	StashApiKey          string
 	FavoriteTag          string
+	PassThroughTag       string
 	Filters              string
 	IsSyncMarkersAllowed bool
 	LogLevel             string
@@ -48,7 +50,8 @@ func Get() Application {
 			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9997/graphql"),
 			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
 			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "Favourite"),
-			Filters:              getEnvOrDefaultStr(envKeyFilters, "27,33,23,25,21,19,31,32"), //27,33,23,25,21,19,31,32
+			PassThroughTag:       getEnvOrDefaultStr(envPassthroughTag, "Passthrough"),
+			Filters:              getEnvOrDefaultStr(envKeyFilters, "27,33,40,19,42,31,47,44,48,32,21,22,23"), //27,33,23,25,21,19,31,32
 			IsSyncMarkersAllowed: getEnvOrDefaultBool(envKeyAllowSyncMarkers, false),
 			LogLevel:             strings.ToLower(getEnvOrDefaultStr(envKeyLogLevel, "info")),
 			IsRedactDisabled:     getEnvOrDefaultBool(envKeyDisableRedact, false),

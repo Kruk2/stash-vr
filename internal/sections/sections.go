@@ -1,15 +1,16 @@
 package sections
 
 import (
+	"bufio"
 	"context"
-	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
+	"os"
 	"stash-vr/internal/cache"
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections/internal"
 	"stash-vr/internal/sections/section"
-	"strings"
-	"sync"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
 
 var c cache.Cache[[]section.Section]
@@ -23,52 +24,32 @@ func Get(ctx context.Context, client graphql.Client) []section.Section {
 func build(ctx context.Context, client graphql.Client, filters string) []section.Section {
 	sss := make([][]section.Section, 3)
 
-	wg := sync.WaitGroup{}
+	readFile, err := os.Open("sections.txt")
 
-	if filters == "frontpage" || filters == "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ss, err := internal.SectionsByFrontpage(ctx, client, "")
-			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
-				return
-			}
-			sss[0] = ss
-			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from front page")
-		}()
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
+		return nil
 	}
 
-	if filters == "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ss, err := internal.SectionsBySavedFilters(ctx, client, "?:")
-			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
-				return
-			}
-			sss[1] = ss
-			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from saved filters")
-		}()
-	}
+	filterNames := []string{}
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Split(bufio.ScanLines)
 
-	if filters != "frontpage" && filters != "" {
-		filterIds := strings.Split(filters, ",")
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ss, err := internal.SectionsByFilterIds(ctx, client, "?:", filterIds)
-			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
-				return
-			}
-			sss[2] = ss
-			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from filter list")
-		}()
+	for fileScanner.Scan() {
+		filterName := fileScanner.Text()
+		if filterName != "" {
+			filterNames = append(filterNames, filterName)
+		}
 	}
+	readFile.Close()
 
-	wg.Wait()
+	ss, err := internal.SectionsByFilterName(ctx, client, "", filterNames)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
+		return nil
+	}
+	sss[2] = ss
+	log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from filter list")
 
 	var sections []section.Section
 

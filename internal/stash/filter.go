@@ -3,11 +3,35 @@ package stash
 import (
 	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
 	"strconv"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
+
+func FindFiltersByName(ctx context.Context, client graphql.Client, filterNames []string) []gql.SavedFilterParts {
+	filters := make([]gql.SavedFilterParts, 0, len(filterNames))
+	response, _ := gql.FindSavedSceneFilters(ctx, client)
+
+	for _, filterName := range filterNames {
+		found := false
+		for _, filter := range response.FindSavedFilters {
+			if filter.Name == filterName {
+				filters = append(filters, filter.SavedFilterParts)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			log.Ctx(ctx).Warn().Err(fmt.Errorf("FindFiltersById: FindSavedFilter: Filter not found")).Str("filterName", filterName).Msg("Skipped filter")
+			continue
+		}
+	}
+
+	return filters
+}
 
 func FindFiltersById(ctx context.Context, client graphql.Client, filterIds []string) []gql.SavedFilterParts {
 	filters := make([]gql.SavedFilterParts, 0, len(filterIds))
