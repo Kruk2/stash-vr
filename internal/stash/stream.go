@@ -27,27 +27,42 @@ var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
 	streams := make([]Stream, len(fsp.Files))
-	isVR := false
+	i := 0
+	const useStreamLink = true
 
-	for i, file := range fsp.Files {
-		streams[i] = Stream{
-			Name: strings.TrimSuffix(file.Basename, filepath.Ext(file.Basename)),
-			Sources: []Source{{
-				Resolution: file.Height,
-				Url:        strings.Replace(file.Path, "\\", "/", -1),
-			}},
+	if useStreamLink {
+		for _, stream := range fsp.SceneStreams {
+			if stream.Label == "Direct stream" {
+				streams[i] = Stream{
+					Name: strings.TrimSuffix(fsp.Files[0].Basename, filepath.Ext(fsp.Files[0].Basename)),
+					Sources: []Source{{
+						Resolution: fsp.Files[0].Height,
+						Url:        stream.Url + ".mp4",
+					}},
+				}
+
+				i++
+			}
 		}
-
-		if strings.Contains(file.Path, "\\VR\\") || strings.Contains(file.Path, "/VR/") {
-			isVR = true
+	} else {
+		for _, file := range fsp.Files {
+			streams[i] = Stream{
+				Name: strings.TrimSuffix(file.Basename, filepath.Ext(file.Basename)),
+				Sources: []Source{{
+					Resolution: file.Height,
+					Url:        strings.Replace(file.Path, "\\", "/", -1),
+				}},
+			}
+			i++
 		}
 	}
 
-	sort.Slice(streams, func(i, j int) bool {
-		return streams[i].Sources[0].Url < streams[j].Sources[0].Url
-	})
+	isVR := false
+	if strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/") {
+		isVR = true
+	}
 
-	if isVR {
+	if !isVR {
 		for _, file := range fsp.SceneStreams {
 			if file.Label == "MP4 Topaz" {
 				streams = append(streams, Stream{

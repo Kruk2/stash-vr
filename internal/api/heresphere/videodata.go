@@ -226,7 +226,10 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 			} else {
 				vs := source{
 					Resolution: s.Resolution,
-					Url:        "file://" + s.Url,
+					Url:        s.Url,
+				}
+				if strings.Index(s.Url, "http") == 0 {
+					vs.Url = "file://" + vs.Url
 				}
 				e.Name = filepath.Base(s.Url)
 				e.Sources = append(e.Sources, vs)
