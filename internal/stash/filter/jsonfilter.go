@@ -1,24 +1,15 @@
 package filter
 
 import (
-	"encoding/json"
 	"fmt"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 )
 
-type jsonFilter struct {
-	SortBy  string   `json:"sortby"`
-	SortDir string   `json:"sortdir,omitempty"`
-	C       []string `json:"c"`
-}
-
 type jsonCriterion struct {
 	Modifier string      `json:"modifier"`
-	Type     string      `json:"type"`
 	Value    interface{} `json:"value"`
 }
-
 type errUnexpectedType struct {
 	sourceType      string
 	destinationType string
@@ -33,16 +24,6 @@ func newUnexpectedTypeErr(source any, destinationType string) *errUnexpectedType
 		sourceType:      fmt.Sprintf("%T", source),
 		destinationType: destinationType,
 	}
-}
-
-func parseJsonCriterion(raw string) (jsonCriterion, error) {
-	var c jsonCriterion
-
-	err := json.Unmarshal([]byte(raw), &c)
-	if err != nil {
-		return jsonCriterion{}, fmt.Errorf("unmarshal json criterion '%s': %w", raw, err)
-	}
-	return c, nil
 }
 
 func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMultiCriterionInput, error) {
@@ -60,11 +41,12 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 		if !ok {
 			return nil, newUnexpectedTypeErr(item, "map[string]interface{}")
 		}
-		id, ok := mid["id"].(string)
+		id_float, ok := mid["id"].(float64)
 		if !ok {
 			return nil, newUnexpectedTypeErr(mid["id"], "string")
 		}
-		ids[i] = id
+
+		ids[i] = fmt.Sprintf("%v", int(id_float+0.5))
 	}
 
 	return &gql.HierarchicalMultiCriterionInput{

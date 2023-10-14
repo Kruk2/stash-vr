@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash/filter"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strings"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
 
 type sectionFromSavedFilterFunc = util.Transform[gql.SavedFilterParts, section.Section]
@@ -44,7 +45,7 @@ func sectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix s
 
 	scenesResponse, err := gql.FindScenePreviewsByFilter(ctx, client, &filterQuery.SceneFilter, &filterQuery.FilterOpts)
 	if err != nil {
-		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Filter, logger.AsJsonStr(filterQuery), err)
+		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Object_filter, logger.AsJsonStr(filterQuery), err)
 	}
 
 	s := section.Section{

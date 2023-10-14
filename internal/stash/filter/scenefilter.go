@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"encoding/json"
 	"fmt"
 	"stash-vr/internal/stash/gql"
 )
@@ -16,44 +15,31 @@ func SavedFilterToSceneFilter(savedFilter gql.SavedFilterParts) (Filter, error) 
 		return Filter{}, fmt.Errorf("unsupported filter mode")
 	}
 
-	filterQuery, err := parseJsonEncodedFilter(savedFilter.Filter)
+	filterQuery, err := parseJsonEncodedFilter(savedFilter)
 	if err != nil {
 		return Filter{}, fmt.Errorf("parseJsonEncodedFilter: %w", err)
 	}
 	return filterQuery, nil
 }
 
-func parseJsonEncodedFilter(raw string) (Filter, error) {
-	var filter jsonFilter
+func parseJsonEncodedFilter(stashFilter gql.SavedFilterParts) (Filter, error) {
 
-	err := json.Unmarshal([]byte(raw), &filter)
-	if err != nil {
-		return Filter{}, fmt.Errorf("unmarshal json scene filter '%s': %w", raw, err)
-	}
-	f, err := parseSceneFilterCriteria(filter.C)
+	f, err := parseSceneFilterCriteria(stashFilter.Object_filter)
 	if err != nil {
 		return Filter{}, fmt.Errorf("parseSceneFilterCriteria: %w", err)
 	}
 
-	sortDir := gql.SortDirectionEnumAsc
-	if filter.SortDir == "desc" {
-		sortDir = gql.SortDirectionEnumDesc
-	}
 	return Filter{FilterOpts: gql.FindFilterType{
-		Per_page:  -1,
-		Sort:      filter.SortBy,
-		Direction: sortDir,
+		Per_page:  stashFilter.Find_filter.Per_page,
+		Sort:      stashFilter.Find_filter.Sort,
+		Direction: stashFilter.Find_filter.Direction,
 	}, SceneFilter: f}, nil
 }
 
-func parseSceneFilterCriteria(jsonCriteria []string) (gql.SceneFilterType, error) {
+func parseSceneFilterCriteria(jsonCriteria map[string]interface{}) (gql.SceneFilterType, error) {
 	f := gql.SceneFilterType{}
-	for _, jsonCriterion := range jsonCriteria {
-		c, err := parseJsonCriterion(jsonCriterion)
-		if err != nil {
-			return gql.SceneFilterType{}, fmt.Errorf("parseJsonCriterion: %w", err)
-		}
-		err = setSceneFilterCriterion(c, &f)
+	for name := range jsonCriteria {
+		err := setSceneFilterCriterion(name, jsonCriteria[name].(map[string]interface{}), &f)
 		if err != nil {
 			return gql.SceneFilterType{}, fmt.Errorf("setSceneFilterCriterion: %w", err)
 		}
@@ -61,9 +47,10 @@ func parseSceneFilterCriteria(jsonCriteria []string) (gql.SceneFilterType, error
 	return f, nil
 }
 
-func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilterType) error {
+func setSceneFilterCriterion(name string, criterionRaw map[string]interface{}, sceneFilter *gql.SceneFilterType) error {
 	var err error
-	switch criterion.Type {
+	criterion := jsonCriterion{Modifier: criterionRaw["modifier"].(string), Value: criterionRaw["value"]}
+	switch name {
 	//HierarchicalMultiCriterionInput
 	case "tags":
 		sceneFilter.Tags, err = criterion.asHierarchicalMultiCriterionInput()
@@ -228,7 +215,7 @@ func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilt
 			return fmt.Errorf("AsMultiCriterionInput: %w", err)
 		}
 	default:
-		return fmt.Errorf("Unable to parse: %s", criterion.Type)
+		return fmt.Errorf("Unable to parse: %s", name)
 	}
 
 	return nil
