@@ -147,7 +147,7 @@ func ContainsI(a string, b string) bool {
 }
 
 func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	isVr := !strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "/VR/") || !strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "\\VR\\")
+	isVr := strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "/VR/") || strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "\\VR\\")
 	if !isVr {
 		return
 	}

@@ -135,7 +135,7 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 	videoData.Fov = 180.0
 	videoData.Lens = "Linear"
 
-	isVr := !strings.Contains(videoData.Media[0].Sources[0].Url, "/VR/") || !strings.Contains(videoData.Media[0].Sources[0].Url, "\\VR\\")
+	isVr := strings.Contains(videoData.Media[0].Sources[0].Url, "/VR/") || strings.Contains(videoData.Media[0].Sources[0].Url, "\\VR\\")
 	filenameSeparator := regexp.MustCompile("[ _.-]+")
 
 	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Media[0].Sources[0].Url)), -1)
@@ -160,6 +160,7 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 		case "flat":
 			videoData.Projection = "perspective"
 			videoData.Stereo = "mono"
+			videoData.Fov = 0
 
 		case "180_mono":
 			videoData.Projection = "equirectangular"
@@ -214,12 +215,22 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 			log.Ctx(ctx).Error().Msg("Wrong number of sources for scene " + s.Id)
 		}
 		for _, s := range stream.Sources {
-			vs := source{
-				Resolution: s.Resolution,
-				Url:        "file://" + s.Url,
+			if ContainsI(s.Url, "TOPAZ") {
+				vs := source{
+					Resolution: s.Resolution,
+					Url:        s.Url,
+				}
+				e.Name = "Topaz"
+				e.Sources = append(e.Sources, vs)
+
+			} else {
+				vs := source{
+					Resolution: s.Resolution,
+					Url:        "file://" + s.Url,
+				}
+				e.Name = filepath.Base(s.Url)
+				e.Sources = append(e.Sources, vs)
 			}
-			e.Name = filepath.Base(s.Url)
-			e.Sources = append(e.Sources, vs)
 		}
 		videoData.Media = append(videoData.Media, e)
 	}

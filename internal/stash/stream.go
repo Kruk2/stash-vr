@@ -27,6 +27,7 @@ var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
 	streams := make([]Stream, len(fsp.Files))
+	isVR := false
 
 	for i, file := range fsp.Files {
 		streams[i] = Stream{
@@ -36,11 +37,29 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 				Url:        strings.Replace(file.Path, "\\", "/", -1),
 			}},
 		}
+
+		if strings.Contains(file.Path, "\\VR\\") || strings.Contains(file.Path, "/VR/") {
+			isVR = true
+		}
 	}
 
 	sort.Slice(streams, func(i, j int) bool {
 		return streams[i].Sources[0].Url < streams[j].Sources[0].Url
 	})
+
+	if isVR {
+		for _, file := range fsp.SceneStreams {
+			if file.Label == "MP4 Topaz" {
+				streams = append(streams, Stream{
+					Name: file.Label,
+					Sources: []Source{{
+						Resolution: 1080,
+						Url:        file.Url,
+					}},
+				})
+			}
+		}
+	}
 
 	return streams
 }
