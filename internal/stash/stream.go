@@ -37,7 +37,7 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 					Name: strings.TrimSuffix(fsp.Files[0].Basename, filepath.Ext(fsp.Files[0].Basename)),
 					Sources: []Source{{
 						Resolution: fsp.Files[0].Height,
-						Url:        stream.Url + ".mp4",
+						Url:        stream.Url,
 					}},
 				}
 

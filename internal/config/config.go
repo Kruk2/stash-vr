@@ -47,7 +47,7 @@ func Get() Application {
 	once.Do(func() {
 		logDeprecatedKeysInUse()
 		cfg = Application{
-			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9997/graphql"),
+			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://192.168.100.28:9997/graphql"),
 			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
 			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "Favourite"),
 			PassThroughTag:       getEnvOrDefaultStr(envPassthroughTag, "Passthrough"),
