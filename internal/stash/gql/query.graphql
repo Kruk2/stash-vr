@@ -169,7 +169,8 @@ fragment SceneScanParts on Scene{
         movie {
             name
         }
-    }
+    },
+    play_count,
     o_counter,
     organized
 }
