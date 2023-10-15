@@ -10,6 +10,7 @@
   stash-vr-release.exe
   ```
 * [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Default to direct stream only.
+* If your setup is similar to mine: all VR videos are inside folder named ```VR``` you can set  ```VR_DETECTION``` setting to ```true```. It will force flat projection for non-vr files.
 
 # Stash-VR
 Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
