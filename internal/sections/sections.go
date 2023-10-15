@@ -8,6 +8,7 @@ import (
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections/internal"
 	"stash-vr/internal/sections/section"
+	"strings"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
@@ -22,45 +23,42 @@ func Get(ctx context.Context, client graphql.Client) []section.Section {
 }
 
 func build(ctx context.Context, client graphql.Client, filters string) []section.Section {
-	sss := make([][]section.Section, 3)
-
+	ss := []section.Section{}
 	readFile, err := os.Open("sections.txt")
 
 	if err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
-		return nil
-	}
+		filterIds := strings.Split(filters, ",")
+		ss, err = internal.SectionsByFilterIds(ctx, client, "", filterIds)
+	} else {
+		filterNames := []string{}
+		fileScanner := bufio.NewScanner(readFile)
+		fileScanner.Split(bufio.ScanLines)
 
-	filterNames := []string{}
-	fileScanner := bufio.NewScanner(readFile)
-	fileScanner.Split(bufio.ScanLines)
-
-	for fileScanner.Scan() {
-		filterName := fileScanner.Text()
-		if filterName != "" {
-			filterNames = append(filterNames, filterName)
+		for fileScanner.Scan() {
+			filterName := fileScanner.Text()
+			if filterName != "" {
+				filterNames = append(filterNames, filterName)
+			}
 		}
-	}
-	readFile.Close()
+		readFile.Close()
 
-	ss, err := internal.SectionsByFilterName(ctx, client, "", filterNames)
+		ss, err = internal.SectionsByFilterName(ctx, client, "", filterNames)
+	}
+
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
 		return nil
 	}
-	sss[2] = ss
 	log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from filter list")
 
 	var sections []section.Section
 
-	for _, ss := range sss {
-		for _, s := range ss {
-			if s.FilterId != "" && section.ContainsFilterId(s.FilterId, sections) {
-				log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
-				continue
-			}
-			sections = append(sections, s)
+	for _, s := range ss {
+		if s.FilterId != "" && section.ContainsFilterId(s.FilterId, sections) {
+			log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
+			continue
 		}
+		sections = append(sections, s)
 	}
 
 	if len(sections) == 0 {

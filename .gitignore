@@ -3,3 +3,7 @@
 /.graphqlconfig
 
 /internal/stash/gql/generated.go
+sections.txt
+build.txt
+*.exe
+launch.json
