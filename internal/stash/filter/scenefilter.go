@@ -32,7 +32,7 @@ func parseJsonEncodedFilter(ctx context.Context, stashFilter gql.SavedFilterPart
 	}
 
 	return Filter{FilterOpts: gql.FindFilterType{
-		Per_page:  stashFilter.Find_filter.Per_page,
+		Per_page:  -1,
 		Sort:      stashFilter.Find_filter.Sort,
 		Direction: stashFilter.Find_filter.Direction,
 	}, SceneFilter: f}, nil
