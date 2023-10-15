@@ -39,6 +39,7 @@ type Application struct {
 	IsHeatmapDisabled    bool
 	HeatmapHeightPx      int
 	IsPlayCountDisabled  bool
+	UseVrDetection       bool
 }
 
 var cfg Application
@@ -53,7 +54,7 @@ func Get() Application {
 			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
 			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "Favourite"),
 			PassThroughTag:       getEnvOrDefaultStr(envPassthroughTag, "Passthrough"),
-			Filters:              getEnvOrDefaultStr(envKeyFilters, "27,33,40,19,42,31,47,44,48,32,21,22,23"), //27,33,23,25,21,19,31,32
+			Filters:              getEnvOrDefaultStr(envKeyFilters, "27,33,40,19,42,31,47,44,48,32,21,22,23"),
 			IsSyncMarkersAllowed: getEnvOrDefaultBool(envKeyAllowSyncMarkers, false),
 			LogLevel:             strings.ToLower(getEnvOrDefaultStr(envKeyLogLevel, "info")),
 			IsRedactDisabled:     getEnvOrDefaultBool(envKeyDisableRedact, false),
@@ -61,6 +62,7 @@ func Get() Application {
 			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
 			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
 			IsPlayCountDisabled:  getEnvOrDefaultBool(envKeyDisablePlayCount, false),
+			UseVrDetection:       getEnvOrDefaultBool(envKeyDisablePlayCount, true),
 		}
 	})
 	return cfg

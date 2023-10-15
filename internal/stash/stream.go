@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
 	streams := []Stream{}
 	isVR := false
+	useVrDetection := config.Get().UseVrDetection
 	const useStreamLink = true
 
 	if useStreamLink {
@@ -36,12 +38,14 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 			if stream.Label == "Direct stream" {
 				streams = append(streams, Stream{
 					Name: strings.TrimSuffix(fsp.Files[0].Basename, filepath.Ext(fsp.Files[0].Basename)),
-					IsVr: strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/"),
 					Sources: []Source{{
 						Resolution: fsp.Files[0].Height,
 						Url:        stream.Url,
 					}},
 				})
+				if useVrDetection {
+					streams[len(streams)-1].IsVr = strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/")
+				}
 				isVR = isVR || streams[len(streams)-1].IsVr
 			}
 		}
@@ -49,12 +53,14 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 		for _, file := range fsp.Files {
 			streams = append(streams, Stream{
 				Name: strings.TrimSuffix(file.Basename, filepath.Ext(file.Basename)),
-				IsVr: strings.Contains(file.Path, "\\VR\\") || strings.Contains(file.Path, "/VR/"),
 				Sources: []Source{{
 					Resolution: file.Height,
 					Url:        strings.Replace(file.Path, "\\", "/", -1),
 				}},
 			})
+			if useVrDetection {
+				streams[len(streams)-1].IsVr = strings.Contains(file.Path, "\\VR\\") || strings.Contains(file.Path, "/VR/")
+			}
 			isVR = isVR || streams[len(streams)-1].IsVr
 		}
 	}
