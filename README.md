@@ -3,7 +3,7 @@
 * Detect VR projection based on filename instead of tags
 * Supports stash 0.23.0+
 * Setup filters by name instead of id. Create file sections.txt in the same directory as exe and put one filter name per one line. Fallbacks to old logic if sections.txt is missing
-* No docker image, just exe for windows. Makes config a bit different since you have to setup env variables by default. I suggest creating start.bat file:
+* No docker image, just exe for windows. Makes config a bit different since you have to setup env variables by yourself. I suggest creating start.bat file:
   ```cmd
   set STASH_GRAPHQL_URL=http:127.0.0.1:9999
   ... more sets
