@@ -1,3 +1,9 @@
+# Main diffrences from the original version
+* Support for DeoVR passthrough (see PASSTHROUGH_TAG)
+* Detect VR projection based on filename instead of tags
+* Supports stash 0.23.0+
+* Setup filters by name instead of id. Create file sections.txt in the same directory as exe and put one filter name per one line. Fallbacks to old logic if sections.txt is missing
+
 # Stash-VR
 Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
 
@@ -29,18 +35,7 @@ It's lightweight, optionally configurable and has support for two-way sync.
   * Markers
 
 ## Installation
-Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
-
-For details or docker compose see [docker_compose.yml](docker-compose.yml).
-
-After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
-
-### Docker
-```
-docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
-```
-
-Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
+Download .exe from releases page. Set envionment variables in console before running exe.
 
 #### Configuration
 * `STASH_GRAPHQL_URL`
@@ -79,6 +74,9 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
+* `PASSTHROUGH_TAG`
+  * Default: `Passthrough`
+  * When true it will set alpha chroma key for DeoVR
 </details>
 
 ## Usage
@@ -135,24 +133,7 @@ Toggle organized flag by adding a tag named `!Org` (case-insensitive) in `Video 
 Current state is shown as `Org:<true/false>`
 
 ## VR
-Both DeoVR and HereSphere has algorithms to automatically detect and handle VR videos.
-It's not foolproof and to manually configure the players with custom layout/mesh-settings you can tag your scenes in Stash as follows:
-
-* Mesh:
-  - `DOME` 180° equirectangular
-  - `SPHERE` 360° equirectangular
-  - `FISHEYE` 180° fisheye
-  - `MKX200` 200° fisheye
-  - `RF52` 190° Canon fisheye
-  - `CUBEMAP` Cubemap (lacks support in DeoVR?)
-  - `EAC` Equi-Angular Cubemap (lacks support in DeoVR?)
-* Layout:
-  - `SBS` Side-by-side (Default)
-  - `TB` Top-bottom
-
-If a mesh is provided but no layout then default layout `SBS` will be used.
-
-Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DOME` tag.
+Projections are detected from filename only.
 
 ## Known issues/Missing features
 
@@ -181,6 +162,7 @@ Just refresh again and the player should receive the latest changes. In other wo
 ### Stash version compatibility
 | Stash-VR | Stash   |
 |---------|---------|
+| v0.7.x | v0.23.x |
 | v0.6.x | v0.18.x |
 | v0.5.x | v0.17.x |
 | v0.4.x | v0.16.x |

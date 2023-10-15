@@ -13,7 +13,7 @@ const (
 	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey      = "STASH_API_KEY"
 	envKeyFavoriteTag      = "FAVORITE_TAG"
-	envPassthroughTag      = "PASSTHROUGH"
+	envPassthroughTag      = "PASSTHROUGH_TAG"
 	envKeyFilters          = "FILTERS"
 	envKeyLogLevel         = "LOG_LEVEL"
 	envKeyDisableRedact    = "DISABLE_REDACT"
@@ -22,6 +22,7 @@ const (
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
+	envVrDetection         = "VR_DETECTION"
 )
 
 var deprecatedEnvKeys = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS", "HERESPHERE_SYNC_MARKERS", "ENABLE_HEATMAP_DISPLAY"}
@@ -62,7 +63,7 @@ func Get() Application {
 			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
 			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
 			IsPlayCountDisabled:  getEnvOrDefaultBool(envKeyDisablePlayCount, false),
-			UseVrDetection:       getEnvOrDefaultBool(envKeyDisablePlayCount, true),
+			UseVrDetection:       getEnvOrDefaultBool(envVrDetection, false),
 		}
 	})
 	return cfg
