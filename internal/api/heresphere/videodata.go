@@ -42,7 +42,8 @@ type videoData struct {
 }
 
 type media struct {
-	Name    string   `json:"name"`
+	Name    string `json:"name"`
+	IsVR    bool
 	Sources []source `json:"sources"`
 }
 
@@ -103,9 +104,9 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 
 	if includeMediaSource {
 		setMediaSources(ctx, s, &vd)
+		set3DFormat(s, &vd)
 	}
 
-	set3DFormat(s, &vd)
 	setTags(s, &vd)
 
 	setScripts(s, &vd)
@@ -139,14 +140,13 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 	videoData.Fov = 180.0
 	videoData.Lens = "Linear"
 
-	isVr := strings.Contains(videoData.Media[0].Sources[0].Url, "/VR/") || strings.Contains(videoData.Media[0].Sources[0].Url, "\\VR\\")
 	filenameSeparator := regexp.MustCompile("[ _.-]+")
 
-	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Media[0].Sources[0].Url)), -1)
+	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Media[0].Name)), -1)
 	for i, part := range nameparts {
 		videoProjection := ""
 
-		if !isVr {
+		if !videoData.Media[0].IsVR {
 			videoProjection = "flat"
 		} else if part == "mkx200" || part == "mkx220" || part == "rf52" || part == "fisheye190" || part == "vrca220" || part == "flat" {
 			videoProjection = part
@@ -214,6 +214,7 @@ func setMediaSources(ctx context.Context, s gql.SceneFullParts, videoData *video
 	for _, stream := range stash.GetStreams(ctx, s.StreamsParts, true) {
 		e := media{
 			Name: stream.Name,
+			IsVR: stream.IsVr,
 		}
 		if len(stream.Sources) != 1 {
 			log.Ctx(ctx).Error().Msg("Wrong number of sources for scene " + s.Id)

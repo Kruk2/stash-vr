@@ -44,7 +44,8 @@ type timeStamp struct {
 }
 
 type encoding struct {
-	Name         string        `json:"name"`
+	Name         string `json:"name"`
+	IsVR         bool
 	VideoSources []videoSource `json:"videoSources"`
 }
 
@@ -112,6 +113,7 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 	for i, stream := range streams {
 		videoData.Encodings[i] = encoding{
 			Name:         stream.Name,
+			IsVR:         stream.IsVr,
 			VideoSources: make([]videoSource, len(stream.Sources)),
 		}
 		for j, source := range stream.Sources {
@@ -147,8 +149,10 @@ func ContainsI(a string, b string) bool {
 }
 
 func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	isVr := strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "/VR/") || strings.Contains(videoData.Encodings[0].VideoSources[0].Url, "\\VR\\")
-	if !isVr {
+	if !videoData.Encodings[0].IsVR {
+		videoData.ScreenType = ""
+		videoData.StereoMode = ""
+		videoData.Is3d = false
 		return
 	}
 
@@ -158,7 +162,7 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 
 	filenameSeparator := regexp.MustCompile("[ _.-]+")
 
-	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Encodings[0].VideoSources[0].Url)), -1)
+	nameparts := filenameSeparator.Split(strings.ToLower(filepath.Base(videoData.Encodings[0].Name)), -1)
 	for i, part := range nameparts {
 		videoProjection := ""
 
@@ -211,9 +215,6 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 	}
 
 	videoData.Title = videoData.ScreenType + " - " + videoData.Title
-	videoData.ScreenType = ""
-	videoData.StereoMode = ""
-	videoData.Is3d = false
 }
 
 func ContainsTag(tagPartsArray gql.TagPartsArray, s string) bool {

@@ -15,6 +15,7 @@ import (
 
 type Stream struct {
 	Name    string
+	IsVr    bool
 	Sources []Source
 }
 
@@ -26,40 +27,36 @@ type Source struct {
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
-	streams := make([]Stream, len(fsp.Files))
-	i := 0
+	streams := []Stream{}
+	isVR := false
 	const useStreamLink = true
 
 	if useStreamLink {
 		for _, stream := range fsp.SceneStreams {
 			if stream.Label == "Direct stream" {
-				streams[i] = Stream{
+				streams = append(streams, Stream{
 					Name: strings.TrimSuffix(fsp.Files[0].Basename, filepath.Ext(fsp.Files[0].Basename)),
+					IsVr: strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/"),
 					Sources: []Source{{
 						Resolution: fsp.Files[0].Height,
 						Url:        stream.Url,
 					}},
-				}
-
-				i++
+				})
+				isVR = isVR || streams[len(streams)-1].IsVr
 			}
 		}
 	} else {
 		for _, file := range fsp.Files {
-			streams[i] = Stream{
+			streams = append(streams, Stream{
 				Name: strings.TrimSuffix(file.Basename, filepath.Ext(file.Basename)),
+				IsVr: strings.Contains(file.Path, "\\VR\\") || strings.Contains(file.Path, "/VR/"),
 				Sources: []Source{{
 					Resolution: file.Height,
 					Url:        strings.Replace(file.Path, "\\", "/", -1),
 				}},
-			}
-			i++
+			})
+			isVR = isVR || streams[len(streams)-1].IsVr
 		}
-	}
-
-	isVR := false
-	if strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/") {
-		isVR = true
 	}
 
 	if !isVR {
