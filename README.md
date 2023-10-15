@@ -3,6 +3,13 @@
 * Detect VR projection based on filename instead of tags
 * Supports stash 0.23.0+
 * Setup filters by name instead of id. Create file sections.txt in the same directory as exe and put one filter name per one line. Fallbacks to old logic if sections.txt is missing
+* No docker image, just exe for windows. Makes config a bit different since you have to setup env variables by default. I suggest creating start.bat file:
+  ```cmd
+  set STASH_GRAPHQL_URL=http:127.0.0.1:9999
+  ... more sets
+  stash-vr-release.exe
+  ```
+* [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Default to direct stream only.
 
 # Stash-VR
 Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
