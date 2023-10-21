@@ -2,6 +2,7 @@ package deovr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -35,7 +36,13 @@ type videoData struct {
 }
 
 type videoDataChromaKey struct {
-	HasAlpha bool `json:"hasAlpha"`
+	Enabled   string  `json:"enabled"`
+	HasAlpha  bool    `json:"hasAlpha"`
+	H         float64 `json:"h"`
+	Opacity   float64 `json:"opacity"`
+	S         float64 `json:"s"`
+	Threshold float64 `json:"threshold"`
+	V         float64 `json:"v"`
 }
 
 type timeStamp struct {
@@ -97,13 +104,19 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	return vd, nil
 }
 
-func setChromaKey(findSceneResponse *gql.FindSceneFullResponse, videoData *videoData) {
+func setChromaKey(findSceneResponse *gql.FindSceneFullResponse, data *videoData) {
 	tagName := config.Get().PassThroughTag
 
 	if ContainsTag(findSceneResponse.FindScene.TagPartsArray, tagName) {
-		videoData.ChromaKey = &videoDataChromaKey{HasAlpha: true}
+		if strings.Contains(findSceneResponse.FindScene.Details, "chromaKey") {
+			var tmp videoData
+			json.Unmarshal([]byte(findSceneResponse.FindScene.Details), &tmp)
+			data.ChromaKey = tmp.ChromaKey
+		} else {
+			data.ChromaKey = &videoDataChromaKey{HasAlpha: true}
+		}
 	} else {
-		videoData.ChromaKey = nil
+		data.ChromaKey = nil
 	}
 }
 
