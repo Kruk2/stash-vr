@@ -36,7 +36,7 @@ type videoData struct {
 }
 
 type videoDataChromaKey struct {
-	Enabled   string  `json:"enabled"`
+	Enabled   bool    `json:"enabled"`
 	HasAlpha  bool    `json:"hasAlpha"`
 	H         float64 `json:"h"`
 	Opacity   float64 `json:"opacity"`
