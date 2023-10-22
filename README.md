@@ -1,4 +1,8 @@
 # Main diffrences from the original version
+1.Download exe and the source code from the Releases page.
+1. Unzip source code.
+1. Place the exe inside the unzipped folder and run.
+
 * Support for DeoVR passthrough (see PASSTHROUGH_TAG)
 * Detect VR projection based on filename instead of tags
 * Supports stash 0.23.0+
