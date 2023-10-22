@@ -43,12 +43,26 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 						Url:        stream.Url,
 					}},
 				})
-				if useVrDetection {
-					streams[len(streams)-1].IsVr = strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/")
-				}
-				isVR = isVR || streams[len(streams)-1].IsVr
 			}
 		}
+
+		if len(streams) == 0 {
+			for _, stream := range fsp.SceneStreams {
+				if stream.Label == "MP4" {
+					streams = append(streams, Stream{
+						Name: strings.TrimSuffix(fsp.Files[0].Basename, filepath.Ext(fsp.Files[0].Basename)),
+						Sources: []Source{{
+							Resolution: fsp.Files[0].Height,
+							Url:        stream.Url,
+						}},
+					})
+				}
+			}
+		}
+		if useVrDetection {
+			streams[len(streams)-1].IsVr = strings.Contains(fsp.Files[0].Path, "\\VR\\") || strings.Contains(fsp.Files[0].Path, "/VR/")
+		}
+		isVR = isVR || streams[len(streams)-1].IsVr
 	} else {
 		for _, file := range fsp.Files {
 			streams = append(streams, Stream{
