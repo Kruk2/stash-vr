@@ -47,16 +47,47 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 			return nil, newUnexpectedTypeErr(item)
 		}
 		id_float, ok := mid["id"].(float64)
+		if ok {
+			ids[i] = fmt.Sprintf("%v", int(id_float+0.5))
+			continue
+		}
+		id_string, ok := mid["id"].(string)
 		if !ok {
 			return nil, newUnexpectedTypeErr(mid["id"])
 		}
 
-		ids[i] = fmt.Sprintf("%v", int(id_float+0.5))
+		ids[i] = id_string
+	}
+
+	excluded, err := getValue[[]any](m, "excluded")
+	var excluded_ids []string
+	if err == nil {
+		excluded_ids = make([]string, len(excluded))
+		for i, item := range excluded {
+			mid, ok := item.(stringAnyMap)
+			if !ok {
+				return nil, newUnexpectedTypeErr(item)
+			}
+			id_float, ok := mid["id"].(float64)
+			if ok {
+				excluded_ids[i] = fmt.Sprintf("%v", int(id_float+0.5))
+				continue
+			}
+			id_string, ok := mid["id"].(string)
+			if !ok {
+				return nil, newUnexpectedTypeErr(mid["id"])
+			}
+
+			excluded_ids[i] = id_string
+		}
+	} else {
+		excluded_ids = make([]string, 0)
 	}
 
 	return &gql.HierarchicalMultiCriterionInput{
 		Value:    ids,
 		Modifier: gql.CriterionModifier(c.Modifier),
+		Excludes: excluded_ids,
 	}, nil
 }
 
