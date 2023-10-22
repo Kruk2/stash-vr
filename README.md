@@ -1,5 +1,5 @@
 # Main diffrences from the original version
-1.Download exe and the source code from the Releases page.
+1. Download exe and the source code from the Releases page.
 1. Unzip source code.
 1. Place the exe inside the unzipped folder and run.
 
