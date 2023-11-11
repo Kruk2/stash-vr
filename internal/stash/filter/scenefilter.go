@@ -58,7 +58,7 @@ func setSceneFilterCriterion(ctx context.Context, name string, criterionRaw map[
 		sceneFilter.Tags, err = criterion.asHierarchicalMultiCriterionInput()
 	case "studios":
 		sceneFilter.Studios, err = criterion.asHierarchicalMultiCriterionInput()
-	case "performerTags":
+	case "performer_tags":
 		sceneFilter.Performer_tags, err = criterion.asHierarchicalMultiCriterionInput()
 
 	//StringCriterionInput
