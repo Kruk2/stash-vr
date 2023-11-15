@@ -25,31 +25,17 @@ func getTags(s gql.SceneScanParts) []tag {
 
 	markers := getMarkers(s)
 	performers := getPerformers(s)
-	fields := getFields(s)
 
 	studio := getStudio(s)
 	stashTags := getStashTags(s)
-	movies := getMovies(s)
 
-	meta := make([]tag, 0, len(studio)+len(stashTags)+len(movies))
+	meta := make([]tag, 0, len(studio)+len(stashTags))
 	meta = append(meta, studio...)
 	meta = append(meta, stashTags...)
-	meta = append(meta, movies...)
-
-	if len(studio) == 0 {
-		fields = append(fields, tag{Name: internal.LegendStudio.Full + seperator})
-	}
-	if len(stashTags) == 0 {
-		fields = append(fields, tag{Name: internal.LegendTag.Short + seperator})
-	}
-	if len(movies) == 0 {
-		fields = append(fields, tag{Name: internal.LegendMovie.Full + seperator})
-	}
 
 	fillTagDurations(markers)
 	duration := s.Files[0].Duration * 1000
 	equallyDivideTagDurations(duration, performers)
-	equallyDivideTagDurations(duration, fields)
 	equallyDivideTagDurations(duration, meta)
 
 	if isGlanceMarkersEnabled {
@@ -60,7 +46,6 @@ func getTags(s gql.SceneScanParts) []tag {
 		tagTracks = append(tagTracks, markers)
 	}
 	tagTracks = append(tagTracks, performers)
-	tagTracks = append(tagTracks, fields)
 
 	track := 0
 	tags := make([]tag, 0, len(tagTracks))
@@ -83,19 +68,6 @@ func getPerformers(s gql.SceneScanParts) []tag {
 		tags[i] = tag{
 			Name:   internal.LegendPerformer.Full + seperator + p.Name,
 			Rating: float32(p.Rating100) / 20.0,
-		}
-	}
-	return tags
-}
-
-func getMovies(s gql.SceneScanParts) []tag {
-	if s.Movies == nil {
-		return nil
-	}
-	tags := make([]tag, len(s.Movies))
-	for i, m := range s.Movies {
-		tags[i] = tag{
-			Name: internal.LegendMovie.Full + seperator + m.Movie.Name,
 		}
 	}
 	return tags
