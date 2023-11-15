@@ -18,34 +18,33 @@ type tag struct {
 }
 
 const seperator = ":"
-const isGlanceMarkersEnabled = true
 
 func getTags(s gql.SceneScanParts) []tag {
 	var tagTracks [][]tag
 
 	markers := getMarkers(s)
 	performers := getPerformers(s)
-
 	studio := getStudio(s)
 	stashTags := getStashTags(s)
 
-	meta := make([]tag, 0, len(studio)+len(stashTags))
+	meta := make([]tag, 0, len(studio)+len(performers))
 	meta = append(meta, studio...)
-	meta = append(meta, stashTags...)
+	meta = append(meta, performers...)
 
 	fillTagDurations(markers)
 	duration := s.Files[0].Duration * 1000
-	equallyDivideTagDurations(duration, performers)
 	equallyDivideTagDurations(duration, meta)
 
-	if isGlanceMarkersEnabled {
-		tagTracks = append(tagTracks, markers)
-		tagTracks = append(tagTracks, meta)
-	} else {
-		tagTracks = append(tagTracks, meta)
-		tagTracks = append(tagTracks, markers)
+	tagTracks = append(tagTracks, markers)
+	for i := range stashTags {
+		stashTags[i].Start = 0
+		stashTags[i].End = duration
+		tmp := make([]tag, 0, 1)
+		tmp = append(tmp, stashTags[i])
+		tagTracks = append(tagTracks, tmp)
 	}
-	tagTracks = append(tagTracks, performers)
+
+	tagTracks = append(tagTracks, meta)
 
 	track := 0
 	tags := make([]tag, 0, len(tagTracks))
