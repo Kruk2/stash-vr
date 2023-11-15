@@ -6,6 +6,7 @@
 * Support for DeoVR passthrough (see PASSTHROUGH_TAG)
 * Detect VR projection based on filename instead of tags
 * Supports stash 0.23.0+
+* Syncing markers doesn't recreate them
 * Setup filters by name instead of id. Create file sections.txt in the same directory as exe and put one filter name per one line. Fallbacks to old logic if sections.txt is missing
 * No docker image, just exe for windows. Makes config a bit different since you have to setup env variables by yourself. I suggest creating start.bat file:
   ```cmd
