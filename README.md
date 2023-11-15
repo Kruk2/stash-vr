@@ -13,6 +13,11 @@
   ... more sets
   stash-vr-release.exe
   ```
+  If you want to use stash-vr outside the PC where it's running then use your computer IP.
+  ```cmd
+    set STASH_GRAPHQL_URL=http:192.168.0.10:9999
+  ```
+For your PC it will be different so check the IP using ```ipconfig``` command on windows.
 * [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Default to direct stream only.
 * If your setup is similar to mine: all VR videos are inside folder named ```VR``` you can set  ```VR_DETECTION``` setting to ```true```. It will force flat projection for non-vr files (all files that are not inside ```VR``` folder.
 
