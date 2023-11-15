@@ -109,11 +109,8 @@ func getMarkers(s gql.SceneScanParts) []tag {
 	tags := make([]tag, len(s.Scene_markers))
 	for i, sm := range s.Scene_markers {
 		tagName := sm.Primary_tag.Name
-		if sm.Title != "" {
-			tagName += seperator + sm.Title
-		}
 		t := tag{
-			Name:  tagName,
+			Name:  internal.LegendTag.Short + seperator + tagName,
 			Start: sm.Seconds * 1000,
 		}
 		tags[i] = t

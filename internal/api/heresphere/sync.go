@@ -2,6 +2,7 @@ package heresphere
 
 import (
 	"context"
+	"fmt"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -184,29 +185,69 @@ func setMarkers(ctx context.Context, client graphql.Client, sceneId string, mark
 		log.Ctx(ctx).Warn().Err(err).Msg("setMarkers: FindSceneMarkers")
 		return
 	}
+
+	existingTagIds := make(map[string]string)
+
 	for _, smt := range response.SceneMarkerTags {
 		for _, sm := range smt.Scene_markers {
-			if _, err := gql.SceneMarkerDestroy(ctx, client, sm.Id); err != nil {
-				log.Ctx(ctx).Warn().Err(err).
-					Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("setMarkers: SceneMarkerDestroy")
-				continue
-			}
-			log.Ctx(ctx).Debug().Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("Marker deleted")
+			existingTagIds[fmt.Sprintf("%.1f", sm.Seconds)] = sm.Id
 		}
 	}
+
 	for _, m := range markers {
 		tagId, err := stash.FindOrCreateTag(ctx, client, m.tag)
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Str("title", m.title).Str("tag", m.tag).Msg("setMarkers: FindOrCreateTag")
 			continue
 		}
-		createResponse, err := gql.SceneMarkerCreate(ctx, client, sceneId, tagId, m.start, m.title)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("tagId", tagId).Interface("marker", m).Msg("setMarkers: SceneMarkerCreate")
+
+		_, found := existingTagIds[fmt.Sprintf("%.1f", m.start)]
+
+		if !found {
+			// tag doesn't exist in SceneMarkerTags -> create new tag
+			createResponse, err := gql.SceneMarkerCreate(ctx, client, sceneId, tagId, m.start, m.title)
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("tagId", tagId).Interface("marker", m).Msg("setMarkers: SceneMarkerCreate")
+				continue
+			}
+			log.Ctx(ctx).Debug().Str("id", createResponse.SceneMarkerCreate.Id).Str("title", m.title).Str("tag", m.tag).Msg("Marker created")
+		} else {
+			// tag exists in SceneMarkerTags -> delete from map so it won't be removed later
+			delete(existingTagIds, fmt.Sprintf("%.1f", m.start))
+		}
+	}
+
+	// delete remaining tags in existingTagIds
+	for _, smtId := range existingTagIds {
+		if _, err := gql.SceneMarkerDestroy(ctx, client, smtId); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("id", smtId).Msg("setMarkers: SceneMarkerDestroy")
 			continue
 		}
-		log.Ctx(ctx).Debug().Str("id", createResponse.SceneMarkerCreate.Id).Str("title", m.title).Str("tag", m.tag).Msg("Marker created")
+		log.Ctx(ctx).Debug().Str("id", smtId).Msg("Marker deleted")
 	}
+	// for _, smt := range response.SceneMarkerTags {
+	// 	for _, sm := range smt.Scene_markers {
+	// 		if _, err := gql.SceneMarkerDestroy(ctx, client, sm.Id); err != nil {
+	// 			log.Ctx(ctx).Warn().Err(err).
+	// 				Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("setMarkers: SceneMarkerDestroy")
+	// 			continue
+	// 		}
+	// 		log.Ctx(ctx).Debug().Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("Marker deleted")
+	// 	}
+	// }
+	// for _, m := range markers {
+	// 	tagId, err := stash.FindOrCreateTag(ctx, client, m.tag)
+	// 	if err != nil {
+	// 		log.Ctx(ctx).Warn().Err(err).Str("title", m.title).Str("tag", m.tag).Msg("setMarkers: FindOrCreateTag")
+	// 		continue
+	// 	}
+	// 	createResponse, err := gql.SceneMarkerCreate(ctx, client, sceneId, tagId, m.start, m.title)
+	// 	if err != nil {
+	// 		log.Ctx(ctx).Warn().Err(err).Str("tagId", tagId).Interface("marker", m).Msg("setMarkers: SceneMarkerCreate")
+	// 		continue
+	// 	}
+	// 	log.Ctx(ctx).Debug().Str("id", createResponse.SceneMarkerCreate.Id).Str("title", m.title).Str("tag", m.tag).Msg("Marker created")
+	// }
 }
 
 type requestDetails struct {
@@ -256,6 +297,14 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 				log.Ctx(ctx).Warn().Err(err).Str("request", tagReq.Name).Msg("Failed to find or create tag")
 				continue
 			}
+
+			if tagReq.Start > 0 {
+				request.markers = append(request.markers, marker{
+					tag:   tagName,
+					title: tagName,
+					start: tagReq.Start / 1000,
+				})
+			}
 			request.tagIds = append(request.tagIds, id)
 		case isCategorized && internal.LegendStudio.IsMatch(tagType):
 			if tagName == "" {
@@ -282,15 +331,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		default:
-			if tagType == "" {
-				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty marker primary tag, skipping")
-				continue
-			}
-			request.markers = append(request.markers, marker{
-				tag:   tagType,
-				title: tagName,
-				start: tagReq.Start / 1000,
-			})
+			log.Ctx(ctx).Error().Str("request", tagType).Msg("Unknown tag type")
 		}
 	}
 
