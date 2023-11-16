@@ -19,8 +19,8 @@
     set STASH_GRAPHQL_URL=http:192.168.0.10:9999
   ```
 For your PC it will be different so check the IP using ```ipconfig``` command on windows.
-* [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Default to direct stream only.
-* If your setup is similar to mine: all VR videos are inside folder named ```VR``` you can set  ```VR_DETECTION``` setting to ```true```. It will force flat projection for non-vr files (all files that are not inside ```VR``` folder.
+* [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Defaults to direct stream only.
+* If your setup is similar to mine: all VR videos are inside folder named ```VR``` (or to be precise: if any of the parent folders is named VR) you can set  ```VR_DETECTION``` setting to ```true```. It will force flat projection for non-vr files (all files that are not inside ```VR``` folder).
 
 # Stash-VR
 Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
