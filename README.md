@@ -10,13 +10,13 @@
 * Setup filters by name instead of id. Create file sections.txt in the same directory as exe and put one filter name per one line. Fallbacks to old logic if sections.txt is missing
 * No docker image, just exe for windows. Makes config a bit different since you have to setup env variables by yourself. I suggest creating start.bat file:
   ```cmd
-  set STASH_GRAPHQL_URL=http:127.0.0.1:9999
+  set STASH_GRAPHQL_URL=http:127.0.0.1:9999/graphql
   ... more sets
   stash-vr-release.exe
   ```
   If you want to use stash-vr outside the PC where it's running then use your computer IP.
   ```cmd
-    set STASH_GRAPHQL_URL=http:192.168.0.10:9999
+    set STASH_GRAPHQL_URL=http:192.168.0.10:9999/graphql
   ```
 For your PC it will be different so check the IP using ```ipconfig``` command on windows.
 * [Transcoding](https://github.com/o-fl0w/stash-vr/issues/18) logic is removed as I found it to be useless for my needs. Defaults to direct stream only.
